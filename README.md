@@ -12,6 +12,51 @@ This repository contains small Terraform exercises for managing AWS S3 buckets. 
 
 Each exercise is a separate Terraform root module. Run Terraform commands from the exercise directory you want to work with.
 
+## Install Terraform locally
+
+Install Terraform on your operating system, then confirm that the installed version meets this repository's `>= 1.15.8` requirement.
+
+### macOS
+
+Install [Homebrew](https://brew.sh/) first if it is not already available, then run:
+
+```bash
+brew tap hashicorp/tap
+brew install hashicorp/tap/terraform
+terraform version
+```
+
+### Windows
+
+In PowerShell, install Terraform with Windows Package Manager and verify it:
+
+```powershell
+winget install Hashicorp.Terraform
+terraform version
+```
+
+If `winget` is unavailable, download the Windows ZIP for your system architecture from the [official Terraform installation page](https://developer.hashicorp.com/terraform/install), extract `terraform.exe` to a directory such as `C:\Terraform`, and add that directory to your user `Path`:
+
+```powershell
+[Environment]::SetEnvironmentVariable("Path", $env:Path + ";C:\Terraform", "User")
+```
+
+Open a new PowerShell window, then run `terraform version`.
+
+### Linux
+
+For Ubuntu or Debian, add HashiCorp's official package repository and install Terraform:
+
+```bash
+wget -O - https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(grep -oP '(?<=UBUNTU_CODENAME=).*' /etc/os-release || lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update
+sudo apt install terraform
+terraform version
+```
+
+For Fedora, RHEL, Amazon Linux, or a manual binary installation, use the commands for your distribution on HashiCorp's [official installation page](https://developer.hashicorp.com/terraform/install).
+
 ## Prerequisites
 
 - Terraform `>= 1.15.8`
@@ -92,4 +137,3 @@ Both modules use the AWS provider (`hashicorp/aws` `~> 6.0`) and accept values t
 - `bucket_name` — primary S3 bucket name.
 - `sample_bucket_name` — second bucket used only by `terraform_import/`.
 - `project_name` — learning metadata variable retained in the configuration.
-
