@@ -3,12 +3,12 @@ resource "aws_vpc" "my_vpc" {
   tags = {
     Name = "terraform-learning-vpc"
   }
-  
+
 }
 
 resource "aws_s3_bucket" "my_bucket" {
   bucket = "sairam-terraform-learning-2026"
-  
+
   tags = {
     Name = "terraform-learning-bucket"
   }
@@ -31,23 +31,23 @@ data "aws_ami" "ubuntu" {
 }
 
 resource "aws_instance" "web" {
-    ami           = data.aws_ami.ubuntu.id
-  instance_type = var.instance_type
-  subnet_id     = aws_subnet.my_subnet.id
-    vpc_security_group_ids = [aws_security_group.web_sg.id]
+  ami                    = data.aws_ami.ubuntu.id
+  instance_type          = var.instance_type
+  subnet_id              = aws_subnet.my_subnet.id
+  vpc_security_group_ids = [aws_security_group.web_sg.id]
 
   tags = {
     Name = "terraform-learning-ec2"
   }
 }
 resource "aws_subnet" "my_subnet" {
-  vpc_id            = aws_vpc.my_vpc.id
-  cidr_block        = "10.0.1.0/24"
-    availability_zone = "${var.aws_region}a"
-    map_public_ip_on_launch = true
-    tags = {
-        Name = "terraform-learning-subnet"
-        }
+  vpc_id                  = aws_vpc.my_vpc.id
+  cidr_block              = "10.0.1.0/24"
+  availability_zone       = "${var.aws_region}a"
+  map_public_ip_on_launch = true
+  tags = {
+    Name = "terraform-learning-subnet"
+  }
 }
 resource "aws_internet_gateway" "my_igw" {
   vpc_id = aws_vpc.my_vpc.id
