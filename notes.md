@@ -13,8 +13,10 @@
 10. [State Management](#state-management)
 11. [Import Existing Infrastructure](#import-existing-infrastructure)
 12. [Terraform Modules](#terraform-modules)
-13. [Best Practices](#best-practices)
-14. [Common Commands](#common-commands)
+13. [Terraform Enterprise Workspaces](#terraform-enterprise-workspaces)
+14. [Terraform Enterprise Workflows](#terraform-enterprise-workflows)
+15. [Best Practices](#best-practices)
+16. [Common Commands](#common-commands)
 
 ---
 
@@ -1038,6 +1040,55 @@ Run `terraform init` whenever adding or changing a module source. Use `terraform
 - Keep provider configuration in the root module; pass provider aliases explicitly when a child needs a non-default provider.
 - Do not put backend configuration inside reusable child modules.
 - Treat public/shared module changes as an API: avoid breaking input/output names without versioning.
+
+---
+
+## Terraform Enterprise Workspaces
+
+In Terraform Enterprise, a **workspace** is a managed unit for a Terraform configuration. It brings together the configuration, a separate state file, input variables, run history, permissions, and execution settings. A common approach is to use one workspace per application and environment, such as `payments-dev`, `payments-staging`, and `payments-prod`.
+
+Terraform Enterprise workspaces are different from the CLI workspaces created with `terraform workspace new`. CLI workspaces are multiple state instances within one working directory/backend; Terraform Enterprise workspaces are server-managed objects with their own settings, access controls, and run history.
+
+### What a Workspace Contains
+- **State** — remote state storage, locking, and state history for that workspace.
+- **Configuration source** — a connected VCS repository, configuration uploaded by the CLI, or configuration uploaded through the API.
+- **Variables** — Terraform input variables and environment variables; sensitive values can be masked.
+- **Runs** — plans, applies, policy checks, cost estimates (when enabled), logs, and approvals.
+- **Execution settings** — Terraform version, working directory, execution mode, and provider credentials.
+- **Access control** — team permissions that control who can read state, create runs, or apply changes.
+
+### Recommended Workspace Pattern
+
+```text
+Organization: acme
+├── payments-dev       → dev state and variables
+├── payments-staging   → staging state and variables
+└── payments-prod      → production state, restricted apply permission
+```
+
+Keep environment-specific values in workspace variables (or variable sets), while keeping the reusable Terraform configuration in source control. Avoid placing secrets in `.tfvars` files committed to a repository.
+
+---
+
+## Terraform Enterprise Workflows
+
+Terraform Enterprise supports several ways to supply configuration and start remote runs. The workflows below use the same workspace controls—remote state, logs, policies, and permissions—but differ in how Terraform configuration reaches the workspace and what triggers a run.
+
+| Aspect | Version control workflow (VCS-driven) | CLI-driven workflow | API-driven workflow |
+|---|---|---|---|
+| Configuration source | A connected Git repository and selected branch | Configuration in the local directory where the CLI is run | A configuration version uploaded through the Terraform Enterprise API |
+| Typical trigger | A commit or pull-request event from the VCS provider | `terraform plan` or `terraform apply` from a developer or CI runner | An API request from a CI/CD pipeline or another automation system |
+| Best suited for | Teams using pull requests, code review, and Git as the source of truth | Existing CLI-based workflows and gradual adoption of Terraform Enterprise | Fully automated platforms, custom pipelines, and systems that do not use a supported VCS integration |
+| Run initiation | Terraform Enterprise detects the VCS change and creates the run | The CLI packages and uploads the configuration, then requests the remote run | The client creates an upload/configuration version and then creates a run through API calls |
+| Plan review | In Terraform Enterprise; pull-request status updates can also be reported to the VCS | CLI displays the remote run link and output; review continues in Terraform Enterprise | The automation reads run status and logs from the API, with optional UI review/approval |
+| Apply control | Can be automatic or require confirmation, depending on workspace settings | `terraform apply` confirms/requests the remote apply, subject to workspace permissions | The API can request apply; workspace permissions and approval settings still apply |
+| Main advantage | Strong review and audit trail tied directly to Git changes | Familiar Terraform commands with centralized state and governance | Maximum integration flexibility and no dependency on a local interactive CLI |
+| Key consideration | Requires repository, webhook, and branch configuration | The local/CI user needs valid Terraform Enterprise credentials and workspace access | Requires API authentication and code to manage uploads, polling, errors, and approvals |
+
+### Choosing a Workflow
+- Choose **VCS-driven** for most collaborative infrastructure repositories.
+- Choose **CLI-driven** when engineers already run Terraform locally or when migrating an existing workflow.
+- Choose **API-driven** when a CI/CD platform or internal tool must orchestrate Terraform runs programmatically.
 
 ---
 
